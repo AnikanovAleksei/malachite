@@ -18,6 +18,13 @@ router = Router()
 
 @router.message(F.text == 'Оформить заказ')
 async def order_delivery(message: Message, state: FSMContext):
+    user_id = message.from_user.id
+    cart_items = await rq.get_basket_items(user_id)
+
+    if not cart_items:
+        await message.answer('Добавьте товар, чтобы оформить заказ')
+        return
+
     await message.answer('Внимание! При оформлении заказа Вы даете согласие на обработку персональных данных \n'
                          'Пожалуйста, введите Ваше ФИО:', reply_markup=kb.get_cancel_keyboard())
     await state.set_state(OrderState.waiting_for_name)
