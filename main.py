@@ -45,7 +45,7 @@ async def main():
     await send_message_to_all_users(bot, message_text)
 
     # Планирование рассылки каждые 2 минуты
-    scheduler.add_job(send_message_to_all_users, 'interval', minutes=2, args=[bot, message_text])
+    scheduler.add_job(send_message_to_all_users, 'interval', hours=24, args=[bot, message_text])
 
     # Запуск планировщика
     scheduler.start()
