@@ -1,6 +1,6 @@
 from sqlalchemy import String, BigInteger, ForeignKey, Integer, func, DateTime
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy.ext.asyncio import AsyncAttrs, create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncAttrs, create_async_engine, async_sessionmaker, AsyncSession
 import os
 from dotenv import load_dotenv
 from datetime import datetime
@@ -8,8 +8,25 @@ from datetime import datetime
 
 # Загрузка переменных окружения
 load_dotenv()
-engine = create_async_engine(url=os.getenv('SQLALCHEMY_URL'), echo=True)
-async_session = async_sessionmaker(engine)
+
+# Убедитесь, что переменная окружения SQLALCHEMY_URL установлена корректно
+SQLALCHEMY_URL = os.getenv('SQLALCHEMY_URL')
+if not SQLALCHEMY_URL:
+    raise ValueError("SQLALCHEMY_URL is not set in environment variables")
+
+# Создание асинхронного движка SQLAlchemy с пулом соединений
+engine = create_async_engine(
+    url=SQLALCHEMY_URL,
+    pool_size=10,
+    max_overflow=20,
+    pool_timeout=30,
+    pool_recycle=1800,
+    echo=True
+)
+
+
+# Создание сессии
+async_session = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
 
 class Base(AsyncAttrs, DeclarativeBase):

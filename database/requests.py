@@ -1,3 +1,5 @@
+import logging
+from sqlalchemy.exc import SQLAlchemyError
 from aiogram import Bot
 from database.models import (Category, Item, Basket, Model, Color, Memory, async_session, ScreenSize,
                              Connectivity, RMA, Users)
@@ -6,6 +8,9 @@ from typing import List
 from filters.config import ADMIN_IDS
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 async def get_categories() -> List[Category]:
@@ -276,10 +281,14 @@ async def register_user(user_id: int):
 
 
 async def get_all_users():
-    async with async_session() as session:
-        result = await session.execute(select(Users))
-        users = result.scalars().all()
-        return users
+    try:
+        async with async_session() as session:
+            result = await session.execute(select(Users))
+            users = result.scalars().all()
+            return users
+    except SQLAlchemyError as e:
+        logger.error(f"Error fetching users: {e}")
+        raise
 
 
 async def notify_admins(bot: Bot, order_data: dict):

@@ -7,6 +7,11 @@ from handlers.order import router as order_router
 from database.models import async_main
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from database.requests import get_all_users  # Предположим, что у вас есть такая функция
+import logging
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Загрузка переменных окружения
 load_dotenv()
@@ -19,10 +24,17 @@ scheduler = AsyncIOScheduler()
 
 
 async def send_message_to_all_users(bot_instance: Bot, message_text: str):
-    # Ваша логика для отправки сообщения всем пользователям
-    users = await get_all_users()  # Функция для получения всех пользователей
-    for user in users:
-        await bot_instance.send_message(chat_id=user.telegram_id, text=message_text)
+    try:
+        users = await get_all_users()  # Функция для получения всех пользователей
+        semaphore = asyncio.Semaphore(10)  # Ограничение на 10 одновременных запросов
+
+        async def send_message(user):
+            async with semaphore:
+                await bot_instance.send_message(chat_id=user.telegram_id, text=message_text)
+
+        await asyncio.gather(*(send_message(user) for user in users))
+    except Exception as ex:
+        logger.error(f"Error sending messages: {ex}")
 
 
 async def main():
@@ -44,8 +56,8 @@ async def main():
     # Начальная рассылка
     await send_message_to_all_users(bot, message_text)
 
-    # Планирование рассылки каждые 2 минуты
-    scheduler.add_job(send_message_to_all_users, 'interval', hours=24, args=[bot, message_text])
+    # Планирование рассылки каждые 24 часа
+    scheduler.add_job(send_message_to_all_users, 'interval', minutes=10, args=[bot, message_text])
 
     # Запуск планировщика
     scheduler.start()
@@ -57,4 +69,6 @@ if __name__ == '__main__':
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print('Exit')
+        logger.info('Exit')
+    except Exception as e:
+        logger.error(f"An error occurred: {e}")
