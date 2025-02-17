@@ -7,6 +7,7 @@ from database.models import async_main
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from database import requests as rq
 from aiogram.types import FSInputFile
+from aiogram.exceptions import TelegramForbiddenError
 
 
 scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
@@ -32,6 +33,8 @@ async def send_scheduled_message(bot: Bot):
             try:
                 # Отправка фото с подписью
                 await bot.send_photo(chat_id=user.telegram_id, photo=photo, caption=message_text)
+            except TelegramForbiddenError:
+                print(f"Bot was blocked by the user {user.telegram_id}")
             except Exception as e:
                 print(f"Failed to send message to user {user.telegram_id}: {e}")
 
