@@ -22,7 +22,7 @@ async def send_scheduled_message(bot: Bot):
                     "'Лавина Малахита'. \n\n"
                     "Не упустите шанс стать обладателем одного из лучших устройств года по специальной цене! 💚 \n\n")
 
-    image_path = 'image/IMG_1436.JPG'  # Укажите путь к вашему изображению
+    image_path = '/root/malachite/image/IMG_1436.JPG'  # Укажите путь к вашему изображению
 
     # Используем InputFile для отправки изображения
     photo = FSInputFile(image_path)
@@ -47,7 +47,7 @@ async def main():
     # Проверка на существование задачи перед добавлением
     if not scheduler.get_job("daily_post"):
         # Настройка планировщика для выполнения задачи в 14:00
-        scheduler.add_job(send_scheduled_message, 'cron', hour=19, minute=45, args=[bot], id="daily_post")
+        scheduler.add_job(send_scheduled_message, 'cron', hour=19, minute=48, args=[bot], id="daily_post")
 
     # Запуск планировщика
     scheduler.start()
