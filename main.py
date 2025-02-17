@@ -47,7 +47,7 @@ async def main():
     # Проверка на существование задачи перед добавлением
     if not scheduler.get_job("daily_post"):
         # Настройка планировщика для выполнения задачи в 14:00
-        scheduler.add_job(send_scheduled_message, 'cron', hour=19, minute=38, args=[bot], id="daily_post")
+        scheduler.add_job(send_scheduled_message, 'cron', hour=19, minute=45, args=[bot], id="daily_post")
 
     # Запуск планировщика
     scheduler.start()
