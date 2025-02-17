@@ -612,3 +612,9 @@ async def back_to_main_menu(callback_query: CallbackQuery):
     await callback_query.message.delete()  # Удаление сообщения бота
     await callback_query.message.answer('Вы вернулись в основное меню.', reply_markup=kb.main_keyboard)
     await callback_query.answer()
+
+
+@router.message(F.text == '🔙Назад')
+async def back_to_main(message: Message):
+    main_keyboard = await kb.get_main_keyboard()
+    await message.answer('Вы вернулись в главное меню', reply_markup=main_keyboard)

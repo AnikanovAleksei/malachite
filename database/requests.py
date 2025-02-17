@@ -9,9 +9,6 @@ from filters.config import ADMIN_IDS
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 
 async def get_categories() -> List[Category]:
     async with async_session() as session:
@@ -287,7 +284,7 @@ async def get_all_users():
             users = result.scalars().all()
             return users
     except SQLAlchemyError as e:
-        logger.error(f"Error fetching users: {e}")
+        # Убрано логирование
         raise
 
 

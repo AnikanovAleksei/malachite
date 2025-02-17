@@ -20,11 +20,16 @@ main_keyboard = ReplyKeyboardMarkup(
 )
 
 
+async def get_main_keyboard():
+    return main_keyboard
+
+
 def get_basket_keyboard():
     keyboard = ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text='Корзина'), KeyboardButton(text='Каталог')],
-            [KeyboardButton(text='Очистить корзину'), KeyboardButton(text='Оформить заказ')]
+            [KeyboardButton(text='Очистить корзину'), KeyboardButton(text='Оформить заказ')],
+            [KeyboardButton(text='Назад')]
         ],
         resize_keyboard=True
     )

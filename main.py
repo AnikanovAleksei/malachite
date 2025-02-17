@@ -3,35 +3,59 @@ import asyncio
 import os
 from dotenv import load_dotenv
 from handlers.handlers import router as handlers_router
-from handlers.order import router as order_router
 from database.models import async_main
-import logging
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from database import requests as rq
+from aiogram.types import FSInputFile
 
 
-# Настройка логирования
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
 
-# Загрузка переменных окружения
-load_dotenv()
 
-# Инициализация бота
-bot = Bot(token=os.getenv('TOKEN_ID'))
+async def send_scheduled_message(bot: Bot):
+    users = await rq.get_all_users()
+    message_text = ("Акция Лавина Малахита! \n\n"
+                    "Спешим сообщить: у нас для вас особое предложение на новейшие смартфоны: \n\n"
+                    "- 📱 iPhone 16 Pro 256GB всего за 102,000 рублей \n\n"
+                    "- 📱 iPhone 16 Pro Max 256GB всего за 110,000 рублей \n\n"
+                    "Чтобы воспользоваться акцией, просто напишите в раздел 'Индивидуальный запрос' с текстом "
+                    "'Лавина Малахита'. \n\n"
+                    "Не упустите шанс стать обладателем одного из лучших устройств года по специальной цене! 💚 \n\n")
+
+    image_path = 'image/IMG_1436.JPG'  # Укажите путь к вашему изображению
+
+    # Используем InputFile для отправки изображения
+    photo = FSInputFile(image_path)
+
+    for user in users:
+        if user.telegram_id:
+            try:
+                # Отправка фото с подписью
+                await bot.send_photo(chat_id=user.telegram_id, photo=photo, caption=message_text)
+            except Exception as e:
+                print(f"Failed to send message to user {user.telegram_id}: {e}")
 
 
 async def main():
+    load_dotenv()
     await async_main()
+    bot = Bot(token=os.getenv('TOKEN_ID'))
+
     dp = Dispatcher()
     dp.include_router(handlers_router)
-    dp.include_router(order_router)
 
-    # Запуск бота
+    # Проверка на существование задачи перед добавлением
+    if not scheduler.get_job("daily_post"):
+        # Настройка планировщика для выполнения задачи в 14:00
+        scheduler.add_job(send_scheduled_message, 'cron', hour=19, minute=38, args=[bot], id="daily_post")
+
+    # Запуск планировщика
+    scheduler.start()
+
     await dp.start_polling(bot)
 
 if __name__ == '__main__':
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        logger.info('Exit')
-    except Exception as e:
-        logger.error(f"An error occurred: {e}")
+        print('Exit')
