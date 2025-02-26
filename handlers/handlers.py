@@ -3,8 +3,8 @@ from aiogram.filters import CommandStart, or_f
 from aiogram.types import Message, CallbackQuery
 from aiogram import Router, types, F
 from sqlalchemy import delete
-from handlers.contact import router as manager_router
-from handlers.help_handlers import router as helper
+# from handlers.contact import router as manager_router
+# from handlers.help_handlers import router as helper
 from filters.config import (IPHONE_CATEGORY_ID, IPAD_CATEGORY_ID, WATCH_CATEGORY_ID, PODS_CATEGORY_ID,
                             MACBOOK_CATEGORY_ID)
 from dotenv import load_dotenv
@@ -17,13 +17,10 @@ load_dotenv()
 TOKEN = os.getenv('TOKEN_ID')
 
 
-router = Router()
-
-router.include_router(helper)
-router.include_router(manager_router)
+main_router = Router()
 
 
-@router.message(CommandStart())
+@main_router.message(CommandStart())
 async def cmd_start(message: types.Message):
     async with async_session() as session:
         await rq.create_user_if_not_exists(session, message.from_user.id, message.from_user.username)
@@ -42,12 +39,12 @@ async def cmd_start(message: types.Message):
     )
 
 
-@router.message(or_f(F.text == 'Каталог', F.text == '/menu'))
+@main_router.message(or_f(F.text == 'Каталог', F.text == '/menu'))
 async def catalog(message: Message):
     await message.answer('Выберите категорию товара', reply_markup=await kb.get_catalog())
 
 
-@router.callback_query(F.data.startswith('category_'))
+@main_router.callback_query(F.data.startswith('category_'))
 async def category_selected(callback: CallbackQuery):
     category_id = int(callback.data.split('_')[1])
     device_type = ''
@@ -88,7 +85,7 @@ async def category_selected(callback: CallbackQuery):
 user_context = {}
 
 
-@router.callback_query(F.data.startswith('model_'))
+@main_router.callback_query(F.data.startswith('model_'))
 async def model_selected(callback: CallbackQuery):
     try:
         model_id = int(callback.data.split('_')[1])
@@ -121,7 +118,7 @@ async def model_selected(callback: CallbackQuery):
     user_context[callback.from_user.id]['category_id'] = model.category_id
 
 
-@router.callback_query(F.data.startswith('color_'))
+@main_router.callback_query(F.data.startswith('color_'))
 async def color_selected(callback: CallbackQuery):
     try:
         color_id = int(callback.data.split('_')[1])
@@ -193,7 +190,7 @@ async def color_selected(callback: CallbackQuery):
     await callback.answer(f'Вы выбрали {color.name}')
 
 
-@router.callback_query(F.data.startswith('memory_'))
+@main_router.callback_query(F.data.startswith('memory_'))
 async def memory_selected(callback: CallbackQuery):
     try:
         memory_id = int(callback.data.split('_')[1])
@@ -285,7 +282,7 @@ async def memory_selected(callback: CallbackQuery):
     await callback.answer(f'Вы выбрали {memory.size}')
 
 
-@router.callback_query(F.data.startswith('ram_'))
+@main_router.callback_query(F.data.startswith('ram_'))
 async def ram_selected(callback: CallbackQuery):
     try:
         ram_id = int(callback.data.split('_')[1])
@@ -343,7 +340,7 @@ async def ram_selected(callback: CallbackQuery):
     await callback.answer(f'Вы выбрали {ram.size}')
 
 
-@router.callback_query(F.data.startswith('connection_'))
+@main_router.callback_query(F.data.startswith('connection_'))
 async def connection_selected(callback: CallbackQuery):
     try:
         connectivity_id = int(callback.data.split('_')[1])
@@ -388,7 +385,7 @@ async def connection_selected(callback: CallbackQuery):
     await callback.answer(f'Вы выбрали {connectivity.type}')
 
 
-@router.callback_query(F.data.startswith('screen_size_'))
+@main_router.callback_query(F.data.startswith('screen_size_'))
 async def screen_size_selected(callback: CallbackQuery):
     try:
         screen_size_id = int(callback.data.split('_')[2])
@@ -453,7 +450,7 @@ async def screen_size_selected(callback: CallbackQuery):
 
 
 # Обработка кнопки назад для возврата к категориям
-@router.callback_query(F.data.startswith('back_to_categories'))
+@main_router.callback_query(F.data.startswith('back_to_categories'))
 async def back_to_categories(callback: CallbackQuery):
     await callback.message.answer('Выберите категорию:', reply_markup=await kb.get_catalog())
     await callback.message.delete()
@@ -461,7 +458,7 @@ async def back_to_categories(callback: CallbackQuery):
 
 
 # возвращение от цвета к выбору модели
-@router.callback_query(F.data.startswith('back_to_models'))
+@main_router.callback_query(F.data.startswith('back_to_models'))
 async def back_to_models(callback: CallbackQuery):
     category_id = int(callback.data.split('_')[3])
     models = await rq.get_models_by_category(category_id)
@@ -475,7 +472,7 @@ async def back_to_models(callback: CallbackQuery):
 ALLOWED_CATEGORIES = {IPHONE_CATEGORY_ID, IPAD_CATEGORY_ID, MACBOOK_CATEGORY_ID, WATCH_CATEGORY_ID}
 
 
-@router.callback_query(F.data == 'back_to_colors')
+@main_router.callback_query(F.data == 'back_to_colors')
 async def back_to_colors(callback: CallbackQuery):
     # Получение model_id и category_id из контекста пользователя
     user_data = user_context.get(callback.from_user.id)
@@ -496,7 +493,7 @@ async def back_to_colors(callback: CallbackQuery):
         await callback.message.answer('Не удалось вернуться к выбору цвета. Пожалуйста, начните сначала.')
 
 
-@router.callback_query(F.data == 'back_to_memory')
+@main_router.callback_query(F.data == 'back_to_memory')
 async def back_to_memory(callback: CallbackQuery):
     # Получение модели для выбранного цвета
     color = await rq.get_color(user_context[callback.from_user.id]['color_id'])
@@ -513,7 +510,7 @@ async def back_to_memory(callback: CallbackQuery):
     await callback.answer('Вы вернулись к выбору памяти')
 
 
-@router.callback_query(F.data.startswith('add_to_basket_'))
+@main_router.callback_query(F.data.startswith('add_to_basket_'))
 async def add_to_basket(callback: CallbackQuery):
     try:
         item_id = int(callback.data.split('_')[3])
@@ -532,7 +529,7 @@ async def add_to_basket(callback: CallbackQuery):
     await callback.answer()
 
 
-@router.message(F.text == 'Корзина')
+@main_router.message(F.text == 'Корзина')
 async def show_basket(message: Message):
     user_id = message.from_user.id
     basket_items = await rq.get_basket_items(user_id)
@@ -568,7 +565,7 @@ async def show_basket(message: Message):
     await message.answer(basket_text, reply_markup=kb.get_basket_keyboard())
 
 
-@router.message(F.text == 'Каталог')
+@main_router.message(F.text == 'Каталог')
 async def catalog(message: Message):
     user_id = message.from_user.id
     main_keyboard = await kb.main_keyboard(user_id)
@@ -579,7 +576,7 @@ async def catalog(message: Message):
     await message.answer('Или воспользуйтесь меню ниже', reply_markup=main_keyboard)
 
 
-@router.message(F.text == 'Очистить корзину')
+@main_router.message(F.text == 'Очистить корзину')
 async def clear_basket(message: Message):
     user_id = message.from_user.id
     async with rq.async_session() as session:
@@ -590,7 +587,7 @@ async def clear_basket(message: Message):
     await message.answer("Ваша корзина очищена.", reply_markup=kb.main_keyboard)
 
 
-@router.message(F.text == 'Индивидуальный запрос')
+@main_router.message(F.text == 'Индивидуальный запрос')
 async def individual_request(message: Message):
     response_text = (
         "Кнопка \"Индивидуальный запрос\" предназначена для пользователей, \n"
@@ -607,14 +604,17 @@ async def individual_request(message: Message):
     await message.answer(response_text, reply_markup=kb.get_individual_request_keyboard(), parse_mode="Markdown")
 
 
-@router.callback_query(F.data == 'back_to_main')
+@main_router.callback_query(F.data == 'back_to_main')
 async def back_to_main_menu(callback_query: CallbackQuery):
     await callback_query.message.delete()  # Удаление сообщения бота
     await callback_query.message.answer('Вы вернулись в основное меню.', reply_markup=kb.main_keyboard)
     await callback_query.answer()
 
 
-@router.message(F.text == 'Назад')
+@main_router.message(F.text == 'Назад')
 async def back_to_main(message: Message):
     main_keyboard = await kb.get_main_keyboard()
     await message.answer('Добро пожаловать в основное меню', reply_markup=main_keyboard)
+
+
+router = main_router

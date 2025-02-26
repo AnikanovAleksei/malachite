@@ -13,10 +13,10 @@ from database.requests import notify_admins
 from filters.config import (IPAD_CATEGORY_ID, MACBOOK_CATEGORY_ID)
 from state.register import OrderState
 
-router = Router()
+order_router = Router()
 
 
-@router.message(F.text == 'Оформить заказ')
+@order_router.message(F.text == 'Оформить заказ')
 async def order_delivery(message: Message, state: FSMContext):
     user_id = message.from_user.id
     cart_items = await rq.get_basket_items(user_id)
@@ -30,7 +30,7 @@ async def order_delivery(message: Message, state: FSMContext):
     await state.set_state(OrderState.waiting_for_name)
 
 
-@router.message(OrderState.waiting_for_name)
+@order_router.message(OrderState.waiting_for_name)
 async def process_name(message: Message, state: FSMContext):
     if message.text == "Отмена":
         await cancel_order(message, state)
@@ -42,7 +42,7 @@ async def process_name(message: Message, state: FSMContext):
     await state.set_state(OrderState.waiting_for_address)
 
 
-@router.message(OrderState.waiting_for_address)
+@order_router.message(OrderState.waiting_for_address)
 async def process_address(message: Message, state: FSMContext):
     address = message.text
     await state.update_data(address=address)
@@ -54,7 +54,7 @@ async def process_address(message: Message, state: FSMContext):
     await state.set_state(OrderState.waiting_for_phone)
 
 
-@router.message(OrderState.waiting_for_phone)
+@order_router.message(OrderState.waiting_for_phone)
 async def process_phone(message: Message, state: FSMContext):
     if message.content_type == 'contact':
         phone_number = message.contact.phone_number
@@ -69,7 +69,7 @@ async def process_phone(message: Message, state: FSMContext):
         await message.answer('Номер указан в неправильном формате. Пример номера телефона: +7 xxx xxx xx xx')
 
 
-@router.message(OrderState.waiting_for_email)
+@order_router.message(OrderState.waiting_for_email)
 async def process_email(message: Message, state: FSMContext):
     email = message.text
     if re.match(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$', email):
@@ -80,7 +80,7 @@ async def process_email(message: Message, state: FSMContext):
         await message.answer('Некорректный формат email. Пожалуйста, введите email еще раз:')
 
 
-@router.message(OrderState.waiting_for_delivery_datetime)
+@order_router.message(OrderState.waiting_for_delivery_datetime)
 async def process_delivery_datetime(message: Message, state: FSMContext, bot: Bot):
     delivery_datetime = message.text
     await state.update_data(delivery_datetime=delivery_datetime)
@@ -158,3 +158,5 @@ async def save_order_to_db(user_id: int, data: dict):
 async def cancel_order(message: Message, state: FSMContext):
     await message.answer('Оформление заказа отменено.', reply_markup=kb.main_keyboard)
     await state.clear()
+
+handlers_router = order_router

@@ -1,8 +1,11 @@
-from aiogram import Dispatcher, Bot
-import asyncio
 import os
+import asyncio
+from aiogram import Dispatcher, Bot
 from dotenv import load_dotenv
-from handlers.handlers import router as handlers_router
+from handlers.handlers import router as main_router
+from handlers.order import handlers_router as order_router
+from handlers.contact import router as manager_router
+from handlers.help_handlers import router as helper_router
 from database.models import async_main
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from database import requests as rq
@@ -16,12 +19,9 @@ async def send_scheduled_message(bot: Bot):
     users = await rq.get_all_users()
     message_text = ("🎉 Суперакция Лавина Малахита! Только 24 часа! 📱💥 \n\n"
                     "Не упустите возможность стать обладателем новых iPhone 16 по невероятным ценам! \n\n"
-                    
                     "🔹 iPhone 16 Pro 256GB — всего за 96,000 ₽! 📲✨ \n\n"
                     "🔹 iPhone 16 Pro Max 256GB — всего за 107,000 ₽! 📱🌟 \n\n"
-                    
                     "Акция действует только сутки, поэтому поторопитесь! 🚀 \n\n"
-                    
                     "Чтобы воспользоваться предложением, свяжитесь с нами через индивидуальный запрос. 📞💬 \n\n"
                     "Преобразите свой мир с новыми возможностями iPhone 16! 🥳 \n\n")
 
@@ -33,7 +33,6 @@ async def send_scheduled_message(bot: Bot):
     for user in users:
         if user.telegram_id:
             try:
-                # Отправка фото с подписью
                 await bot.send_photo(chat_id=user.telegram_id, photo=photo, caption=message_text)
             except TelegramForbiddenError:
                 print(f"Bot was blocked by the user {user.telegram_id}")
@@ -47,7 +46,12 @@ async def main():
     bot = Bot(token=os.getenv('TOKEN_ID'))
 
     dp = Dispatcher()
-    dp.include_router(handlers_router)
+
+    # Включаем все роутеры в основной диспетчере
+    dp.include_router(main_router)
+    dp.include_router(order_router)
+    dp.include_router(helper_router)
+    dp.include_router(manager_router)
 
     # Проверка на существование задачи перед добавлением
     if not scheduler.get_job("daily_post"):
@@ -58,7 +62,6 @@ async def main():
     scheduler.start()
 
     await dp.start_polling(bot)
-
 
 if __name__ == '__main__':
     try:
