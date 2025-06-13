@@ -15,38 +15,6 @@ from aiogram.exceptions import TelegramForbiddenError
 scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
 
 
-async def send_scheduled_message(bot: Bot):
-    users = await rq.get_all_users()
-    message_text = ("🌸 Весна наступает – цены тают! 🌞 \n\n"
-                    "В магазине Malachite.aps пришло время весенних перемен! \n\n"
-                    "Мы подготовили акцию, которая растопит зимний холод, ведь наши скидки "
-                    "такие же теплые, как первые лучи солнца. \n\n"
-                    
-                    "💻 Что вас ждет? \n\n"
-                    "- Скидки на технику. \n\n"
-                    "- Специальные предложения на новые модели гаджетов. \n\n"
-                    "- Подарки при покупке! \n\n"
-                    
-                    "⏳ Когда? \n\n"
-                    "Акции будут проводиться раз в неделю и действуют 24 часа! \n\n"
-                    "🌿 Поспешите, пока весенние предложения не растаяли вместе со снегом. \n\n"
-                    "🔗 Для уточнения цен акций воспользуйтесь индивидуальным запросом! \n\n")
-
-    image_path = '/root/malachite/image/IMG_1553.JPG'  # Укажите путь к вашему изображению
-
-    # Используем InputFile для отправки изображения
-    # photo = FSInputFile(image_path)
-    #
-    # for user in users:
-    #     if user.telegram_id:
-    #         try:
-    #             await bot.send_photo(chat_id=user.telegram_id, photo=photo, caption=message_text)
-    #         except TelegramForbiddenError:
-    #             print(f"Bot was blocked by the user {user.telegram_id}")
-    #         except Exception as e:
-    #             print(f"Failed to send message to user {user.telegram_id}: {e}")
-
-
 async def main():
     load_dotenv()
     await async_main()
