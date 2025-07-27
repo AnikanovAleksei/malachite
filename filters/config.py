@@ -1,3 +1,5 @@
+import os
+
 IPHONE_CATEGORY_ID = 1
 IPAD_CATEGORY_ID = 2
 WATCH_CATEGORY_ID = 3
@@ -8,7 +10,7 @@ ADMIN_IDS = [1454714038, 2144211023]
 
 # Новые настройки (добавляем в тот же файл)
 class DbConfig:
-    URL = "mysql+asyncmy://root:trolez123@localhost/malachite"
+    URL = os.getenv('SQLALCHEMY_URL')
 
 
 class PricesConfig:
