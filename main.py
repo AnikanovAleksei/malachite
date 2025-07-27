@@ -8,9 +8,7 @@ from handlers.contact import router as manager_router
 from handlers.help_handlers import router as helper_router
 from database.models import async_main
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from database import requests as rq
-from aiogram.types import FSInputFile
-from aiogram.exceptions import TelegramForbiddenError
+from handlers.admin import router as admin_router
 
 scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
 
@@ -27,6 +25,7 @@ async def main():
     dp.include_router(order_router)
     dp.include_router(helper_router)
     dp.include_router(manager_router)
+    dp.include_router(admin_router)
 
     await dp.start_polling(bot)
 
